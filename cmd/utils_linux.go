@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"hyphon/sampcon/libcontainer/config"
+	linuxcontainer "hyphon/sampcon/libcontainer/container"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
@@ -20,17 +21,25 @@ func startContainer(context *cli.Context, spec *specs.Spec) (int, error) {
 		errEmptyID := errors.New("container id can not be empty.")
 		return -1, errEmptyID
 	}
-	err := createContainer(context, id, spec)
+	container, err := createContainer(context, id, spec)
+	fmt.Printf("container:%+v\n", container)
 
 	//r := &runner{}
 	//return r.run()
 	return 0, err
 }
 
-func createContainer(context *cli.Context, id string, spec *specs.Spec) error {
+//func loadfactory(context *cli.Context) error {
+//	container := linuxcontainer.New()
+//}
+
+func createContainer(context *cli.Context, id string, spec *specs.Spec) (*linuxcontain.Linuxcontain, error) {
 	config, err := specconv(context, spec)
 	fmt.Printf("config:%+v\n", config)
-	return err
+	//container := loadfactory(context)
+	container := linuxcontainer.New(id)
+	//container.create()
+	return container, err
 }
 
 // parseMountOptions parses the string and returns the flags, propagation
