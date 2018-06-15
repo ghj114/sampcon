@@ -23,6 +23,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		cmd.RunCommand,
+		cmd.InitCommand,
 	}
 	app.Action = func(c *cli.Context) error {
 		fmt.Println("Hello friend!")

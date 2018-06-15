@@ -19,6 +19,7 @@ var RunCommand = cli.Command{
 	},
 	Action: func(context *cli.Context) error {
 		spec, err := setupSpec(context)
+		fmt.Printf("spec:%+v\n", spec)
 		if err != nil {
 			return err
 		}

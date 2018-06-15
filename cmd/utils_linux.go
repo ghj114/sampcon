@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	linuxcontainer "hyphon/sampcon/libcontainer"
 	"hyphon/sampcon/libcontainer/config"
-	linuxcontainer "hyphon/sampcon/libcontainer/container"
+	"hyphon/sampcon/libcontainer/utils"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/urfave/cli"
@@ -21,23 +22,24 @@ func startContainer(context *cli.Context, spec *specs.Spec) (int, error) {
 		errEmptyID := errors.New("container id can not be empty.")
 		return -1, errEmptyID
 	}
-	container, err := createContainer(context, id, spec)
+	container, _ := createContainer(context, id, spec)
 	fmt.Printf("container:%+v\n", container)
 
-	//r := &runner{}
-	//return r.run()
-	return 0, err
+	r := &runner{
+		container: container,
+	}
+	return r.run(spec.Process)
 }
 
 //func loadfactory(context *cli.Context) error {
 //	container := linuxcontainer.New()
 //}
 
-func createContainer(context *cli.Context, id string, spec *specs.Spec) (*linuxcontain.Linuxcontain, error) {
+func createContainer(context *cli.Context, id string, spec *specs.Spec) (*linuxcontainer.Linuxcontainer, error) {
 	config, err := specconv(context, spec)
 	fmt.Printf("config:%+v\n", config)
 	//container := loadfactory(context)
-	container := linuxcontainer.New(id)
+	container, _ := linuxcontainer.New(id, config)
 	//container.create()
 	return container, err
 }
@@ -151,6 +153,7 @@ func createmount(path string, m *specs.Mount) *config.Mount {
 		PropagationFlags: pgflags,
 		Extensions:       ext,
 	}
+	fmt.Printf("config.Mounts:%+v\n", mount)
 	return &mount
 }
 
@@ -167,4 +170,45 @@ func specconv(context *cli.Context, spec *specs.Spec) (*config.Config, error) {
 		config.Mounts = append(config.Mounts, createmount(abs_dir, &m))
 	}
 	return config, err
+}
+
+func (r *runner) setIO(process *linuxcontainer.Process) error {
+	parent, child, err := utils.NewSockPair("console")
+	process.ConsoleSocket = child
+	fmt.Printf("consolesocket.parent:%d,child:%d\n", parent, child)
+	return err
+}
+
+func newProcess(process *specs.Process) (*linuxcontainer.Process, error) {
+	lp := &linuxcontainer.Process{
+		Args: process.Args,
+		Env:  process.Env,
+		Cwd:  process.Cwd,
+	}
+
+	return lp, nil
+}
+
+type runner struct {
+	container *linuxcontainer.Linuxcontainer
+}
+
+func (r *runner) run(process *specs.Process) (int, error) {
+	fmt.Printf("process:%+v\n", process)
+	newp, err := newProcess(process)
+	err = r.setIO(newp)
+	handler := newSignalHandler(false)
+	r.container.Run(newp)
+	go func() {
+		status, _ := handler.forward()
+		fmt.Printf("status:%d\n", status)
+	}()
+	select {}
+	return 0, err
+}
+
+func StartInitialization() (err error) {
+	fmt.Printf("test in init-----------------------------\n")
+	err = linuxcontainer.NewContainerInit()
+	return err
 }

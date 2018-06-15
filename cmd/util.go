@@ -9,7 +9,7 @@ import (
 )
 
 func setupSpec(context *cli.Context) (*specs.Spec, error) {
-	spec, err := loadspec("/home/hyphon/docker/sampleContainer/config.json")
+	spec, err := loadspec("/home/hyphon/sampleContainer/config.json")
 	if err != nil {
 		return nil, err
 	}
