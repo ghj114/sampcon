@@ -66,7 +66,8 @@ type Process struct {
 	//Rlimits []configs.Rlimit
 
 	// ConsoleSocket provides the masterfd console.
-	ConsoleSocket *os.File
+	PConsoleSocket *os.File
+	ConsoleSocket  *os.File
 
 	ops processOperations
 }

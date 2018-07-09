@@ -4,8 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"hyphon/sampcon/libcontainer/config"
+	"hyphon/sampcon/libcontainer/utils"
 	"os"
+	"os/exec"
 	"strconv"
+	"syscall"
+
+	"github.com/containerd/console"
+	"golang.org/x/sys/unix"
 )
 
 // initConfig is used for transferring parameters from Exec() to Init()
@@ -30,19 +36,53 @@ type InitConfig struct {
 	Rootless      bool   `json:"rootless"`
 }
 
-func setconsole() error {
-	return nil
+func setconsole(socket *os.File) error {
+	defer socket.Close()
+	fmt.Printf("socket:%v\n", socket)
+	pty, slavePath, err := console.NewPty()
+	err = pty.Resize(console.WinSize{
+		Height: 30,
+		Width:  60,
+	})
+	defer pty.Close()
+	fmt.Printf("ptyname:%s,pty:%v,slavepath:%s\n", pty.Name(), pty.Fd(), slavePath)
+	if err := utils.SendFd(socket, pty.Name(), pty.Fd()); err != nil {
+		fmt.Printf("sendfd err:%s\n", err)
+		return err
+	}
+	err = dupStdio(slavePath)
+	_, err = syscall.Setsid()
+	if err := unix.IoctlSetInt(0, unix.TIOCSCTTY, 0); err != nil {
+		return err
+	}
+	return err
 }
+
+func execshell() error {
+	cmd := exec.Command("/bin/sh")
+	//cmd := exec.Command("/bin/ls", "-l")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	fmt.Printf("execshell is over\n")
+	return err
+}
+
 func NewContainerInit() error {
-	fmt.Printf("itest------------1\n")
-	envConsole := os.Getenv("_LIBCONTAINER_INITPIPE")
+	//envConsole := os.Getenv("_LIBCONTAINER_INITPIPE")
+	envConsole := os.Getenv("_LIBCONTAINER_CONSOLE")
 	console, err := strconv.Atoi(envConsole)
 	fmt.Printf("receive console:%d\n", console)
-	consoleSocket := os.NewFile(uintptr(console), "init")
+	consoleSocket := os.NewFile(uintptr(console), "console")
 	var config *InitConfig
-	fmt.Printf("itest------------2\n")
 	err = json.NewDecoder(consoleSocket).Decode(&config)
 	fmt.Printf("receive config:%+v\n", config)
-	err = setconsole()
+	err = setconsole(consoleSocket)
+	err = execshell()
+	if err != nil {
+		fmt.Printf("execshell err:%s\n", err)
+	}
+	select {}
 	return err
 }

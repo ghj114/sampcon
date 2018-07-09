@@ -33,16 +33,17 @@ func (sighdl *signalHandler) forward() (int, error) {
 	for s := range sighdl.signals {
 		switch s {
 		case unix.SIGWINCH:
-			fmt.Printf("receive SIGWINCH\n")
+			fmt.Printf("receive in forward SIGWINCH\n")
 		case unix.SIGCHLD:
-			fmt.Printf("receive SIGCHLD\n")
+			fmt.Printf("receive in forward SIGCHLD\n")
 		case unix.SIGINT:
-			fmt.Printf("receive SIGINT\n")
+			fmt.Printf("receive in forward  SIGINT\n")
 			signal.Reset(unix.SIGINT)
 		default:
-			fmt.Printf("receive %v\n", s)
+			fmt.Printf("receive in forward %v\n", s)
 		}
 	}
+	fmt.Printf("hyph.signalhandler exit \n")
 
 	return 0, nil
 }

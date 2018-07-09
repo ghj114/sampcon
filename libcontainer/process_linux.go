@@ -26,6 +26,7 @@ func (p *initProcess) wait() (*os.ProcessState, error) {
 	err := p.cmd.Wait()
 	return p.cmd.ProcessState, err
 }
+
 func (p *initProcess) start() error {
 	defer p.parentPipe.Close()
 	fmt.Printf("cmd:%+v\n", p.cmd)
@@ -48,10 +49,13 @@ func (p *initProcess) start() error {
 		//ProcessLabel:     r.container.config.ProcessLabel,
 		//Rlimits:          c.config.Rlimits,
 	}
-	err = utils.WriteJSON(p.parentPipe, cfg)
+	//err = utils.WriteJSON(p.parentPipe, cfg)
+	err = utils.WriteJSON(p.process.PConsoleSocket, cfg)
 
-	state, err := p.wait()
-	fmt.Printf("state:%v\n", state)
+	go func() {
+		state, _ := p.wait()
+		fmt.Printf("state:%+v\n", state)
+	}()
 	//return err
 
 	//cmd := exec.Command("/bin/sh", "-c", "ls -l")

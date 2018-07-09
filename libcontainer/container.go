@@ -93,9 +93,10 @@ func (c *Linuxcontainer) execCmd(p *Process, childpipe *os.File) (*exec.Cmd, err
 	cmd.Dir = c.config.Rootfs
 	cmd.ExtraFiles = append(cmd.ExtraFiles, p.ConsoleSocket, childpipe)
 	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("_LIBCONTAINER_CONSOLE=%d", 3+len(cmd.ExtraFiles)-1),
+		fmt.Sprintf("_LIBCONTAINER_CONSOLE=%d", 3+len(cmd.ExtraFiles)-2),
 		fmt.Sprintf("_LIBCONTAINER_INITPIPE=%d", 3+len(cmd.ExtraFiles)-1),
 	)
+	fmt.Printf("cmd.ENV:%s\n", cmd.Env)
 	return cmd, nil
 }
 
@@ -123,6 +124,7 @@ func (c *Linuxcontainer) start(p *Process) error {
 	err = newparent.start()
 	return err
 }
+
 func (c *Linuxcontainer) Start(p *Process) error {
 	err := c.createExecinfo()
 	if err != nil {

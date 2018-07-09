@@ -172,11 +172,38 @@ func specconv(context *cli.Context, spec *specs.Spec) (*config.Config, error) {
 	return config, err
 }
 
-func (r *runner) setIO(process *linuxcontainer.Process) error {
+func (r *runner) setIO(process *linuxcontainer.Process) (*tty, error) {
 	parent, child, err := utils.NewSockPair("console")
+	process.PConsoleSocket = parent
 	process.ConsoleSocket = child
 	fmt.Printf("consolesocket.parent:%d,child:%d\n", parent, child)
-	return err
+	t := &tty{}
+	//t.consoleC = make(chan error, 1)
+	go func() {
+		//f, err := utils.RecvFd(parent)
+		//fmt.Printf("consolesocket.ttymaster:%d\n", f)
+		//if err != nil {
+		//	fmt.Printf("recvfd err:%s\n", err)
+		//}
+		//cons, err := console.ConsoleFromFile(f)
+		//if err != nil {
+		//	fmt.Printf("conslefromfile err:%s\n", err)
+		//}
+		if err := t.recvtty(parent); err != nil {
+			//t.consoleC <- err
+			fmt.Printf("recvtty err:%s\n", err)
+		}
+		//t.consoleC <- nil
+		//go func() {
+		//	sigchan := make(chan os.Signal, 1)
+		//	fmt.Printf("in handleinterrupt\n")
+		//	signal.Notify(sigchan, os.Interrupt)
+		//	rec := <-sigchan
+		//	fmt.Printf("receive sig in recvtty:%v\n", rec)
+		//	os.Exit(0)
+		//}()
+	}()
+	return t, err
 }
 
 func newProcess(process *specs.Process) (*linuxcontainer.Process, error) {
@@ -196,14 +223,17 @@ type runner struct {
 func (r *runner) run(process *specs.Process) (int, error) {
 	fmt.Printf("process:%+v\n", process)
 	newp, err := newProcess(process)
-	err = r.setIO(newp)
 	handler := newSignalHandler(false)
+	_, err = r.setIO(newp)
 	r.container.Run(newp)
-	go func() {
-		status, _ := handler.forward()
-		fmt.Printf("status:%d\n", status)
-	}()
-	select {}
+	fmt.Printf("hyph-----------\n")
+	//go func() {
+	//	status, _ := handler.forward()
+	//	fmt.Printf("status:%d\n", status)
+	//}()
+	status, _ := handler.forward()
+	fmt.Printf("status:%d\n", status)
+	//select {}
 	return 0, err
 }
 
