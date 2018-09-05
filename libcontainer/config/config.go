@@ -64,7 +64,7 @@ type Config struct {
 	Mounts []*Mount `json:"mounts"`
 
 	// The device nodes that should be automatically created within the container upon container start.  Note, make sure that the node is marked as allowed in the cgroup as well!
-	//Devices []*Device `json:"devices"`
+	Devices []*Device `json:"devices"`
 
 	//MountLabel string `json:"mount_label"`
 
@@ -87,7 +87,7 @@ type Config struct {
 
 	// Cgroups specifies specific cgroup settings for the various subsystems that the container is
 	// placed into to limit the resources the container has available
-	//Cgroups *Cgroup `json:"cgroups"`
+	Cgroups *Cgroup `json:"cgroups"`
 
 	// UidMappings is an array of User ID mappings for User Namespaces
 	//UidMappings []IDMap `json:"uid_mappings"`

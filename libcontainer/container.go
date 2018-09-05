@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"hyphon/sampcon/libcontainer/cgroup/fs"
 	"hyphon/sampcon/libcontainer/config"
 	"hyphon/sampcon/libcontainer/utils"
 
@@ -103,11 +104,15 @@ func (c *Linuxcontainer) execCmd(p *Process, childpipe *os.File) (*exec.Cmd, err
 func (c *Linuxcontainer) newParentProcess(p *Process) (*initProcess, error) {
 	parentPipe, childPipe, err := utils.NewSockPair("init")
 	cmd, err := c.execCmd(p, childPipe)
+	cgroupManager := fs.Manager{
+		Cgroups: c.config.Cgroups,
+	}
 	initProcess := &initProcess{
 		cmd:        cmd,
 		childPipe:  childPipe,
 		parentPipe: parentPipe,
 		//manager:         c.cgroupManager,
+		cgroupManager: &cgroupManager,
 		//intelRdtManager: c.intelRdtManager,
 		//config:          c.newInitConfig(p),
 		container: c,

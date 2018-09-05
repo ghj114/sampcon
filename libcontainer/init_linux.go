@@ -83,6 +83,5 @@ func NewContainerInit() error {
 	if err != nil {
 		fmt.Printf("execshell err:%s\n", err)
 	}
-	select {}
 	return err
 }

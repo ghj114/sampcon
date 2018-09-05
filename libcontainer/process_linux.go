@@ -2,6 +2,7 @@ package linuxcontainer
 
 import (
 	"fmt"
+	"hyphon/sampcon/libcontainer/cgroup"
 	"hyphon/sampcon/libcontainer/utils"
 	"io"
 	"os"
@@ -13,7 +14,7 @@ type initProcess struct {
 	parentPipe *os.File
 	childPipe  *os.File
 	//config     *initConfig
-	//manager         cgroups.Manager
+	cgroupManager cgroup.Manager
 	//intelRdtManager intelrdt.Manager
 	container     *Linuxcontainer
 	fds           []string
@@ -27,11 +28,16 @@ func (p *initProcess) wait() (*os.ProcessState, error) {
 	return p.cmd.ProcessState, err
 }
 
+func (p *initProcess) pid() int {
+	return p.cmd.Process.Pid
+}
+
 func (p *initProcess) start() error {
 	defer p.parentPipe.Close()
 	fmt.Printf("cmd:%+v\n", p.cmd)
 	err := p.cmd.Start()
 	p.childPipe.Close()
+	p.cgroupManager.Apply(p.pid())
 
 	cfg := &InitConfig{
 		//Config:           r.container.config,

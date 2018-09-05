@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/containerd/console"
+	"golang.org/x/sys/unix"
 )
 
 type tty struct {
@@ -113,7 +114,8 @@ func (t *tty) recvtty(socket *os.File) error {
 
 func handleInterrupt(c console.Console) {
 	sigchan := make(chan os.Signal, 1)
-	signal.Notify(sigchan, os.Interrupt)
+	//signal.Notify(sigchan, os.Interrupt)
+	signal.Notify(sigchan, unix.SIGCHLD)
 	rec := <-sigchan
 	fmt.Printf("receive sig in recvtty:%v\n", rec)
 	c.Reset()

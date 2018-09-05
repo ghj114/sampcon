@@ -5,6 +5,8 @@ import (
 
 	_ "hyphon/sampcon/libcontainer/nsenter"
 
+	"hyphon/sampcon/libcontainer"
+
 	"github.com/urfave/cli"
 )
 
@@ -19,4 +21,10 @@ var InitCommand = cli.Command{
 		fmt.Printf("init\n")
 		return err
 	},
+}
+
+func StartInitialization() (err error) {
+	fmt.Printf("test in init-----------------------------\n")
+	err = linuxcontainer.NewContainerInit()
+	return err
 }
